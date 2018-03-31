@@ -1238,5 +1238,3 @@ def WriteVerilog(f):
     print("// Generated using Chipy (Constructing Hardware In PYthon)", file=f)
     for modname, module in ChipyModulesDict.items():
         module.write_verilog(f)
-
-

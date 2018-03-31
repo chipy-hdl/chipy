@@ -13,13 +13,13 @@ A Simple Example
 The following is a simple Chipy example design:
 
     from Chipy import *
-    
+
     with AddModule("ADD_OR_SUB_DEMO"):
         clk = AddInput("CLK")
         sub = AddInput("SUB")
         a, b = AddInput("A B", 32)
         out = AddOutput("OUT", 32, posedge=clk)
-        
+
         with If(sub):
            out.next = a - b
         with Else:
@@ -54,18 +54,18 @@ Here is a different version of the design, demonstrating some of the variations
 mentioned so far:
 
     from Chipy import *
-    
+
     with AddModule("ADD_OR_SUB_DEMO"):
         clk = AddInput("CLK")
         sub = AddInput("SUB")
         a, b = AddInput("A B", 32)
         out = AddOutput("OUT", 32)
-        
+
         with If(sub):
            Assign(out, a - b)
         with Else:
            Assign(out, a + b)
-	
+
 	AddFF(out, posedge=clk)
 
     with open("demo.v", "w") as f:
@@ -215,4 +215,3 @@ Todos
 - Verilog Primitive Inst
 - Backbox modules
 - Label(name, sig)
-

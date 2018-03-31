@@ -58,4 +58,3 @@ module gold(
   end
 endmodule
 """, file=f)
-

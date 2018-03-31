@@ -1,9 +1,9 @@
 #!/bin/bash
 
-set -e
-
 rm -f test[0-9][0-9][0-9].v
 rm -f test[0-9][0-9][0-9]_*.log
+
+set -e
 
 run() {
 	idx=0 id=$id
@@ -63,4 +63,3 @@ else
 fi
 
 echo "ALL OK"
-

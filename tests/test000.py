@@ -20,7 +20,7 @@ with AddModule("gate_2"):
     submode = AddInput("submode")
     a, b = AddInput("a b", 32)
     out = AddOutput("out", 32)
-    
+
     AddFF(out, posedge=clk)
 
     with If(submode):
@@ -34,7 +34,7 @@ with AddModule("gate_3"):
     AddInput("submode")
     AddInput("a b", 32)
     AddOutput("out", 32)
-    
+
     AddFF(Sig("out"), posedge=Sig("clk"))
 
     with If(submode):
@@ -75,4 +75,3 @@ module gold(clk, submode, a, b, out);
   end
 endmodule
 """, file=f)
-

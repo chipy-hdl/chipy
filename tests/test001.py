@@ -100,4 +100,3 @@ module gold(clk, reverse_order, concat_mode, a, b, out);
   end
 endmodule
 """, file=f)
-
