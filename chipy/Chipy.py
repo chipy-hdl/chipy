@@ -139,6 +139,7 @@ class ChipyModule:
         self.instances = list()
         self.codeloc = ChipyCodeLoc()
 
+        self.initial_snippets = list()
         self.init_snippets = list()
         self.code_snippets = list()
 
@@ -241,6 +242,12 @@ class ChipyModule:
 
         for line in assignlist:
             print(line, file=f)
+
+        print("  initial begin", file=f)
+        for snippet in self.initial_snippets:
+            for line in snippet.text_lines:
+                print(line, file=f)
+        print("  end", file=f)
 
         snippet_db = self.init_snippets + self.code_snippets
         snippet_parent = list()
@@ -751,7 +758,7 @@ def AddInput(name, type=1):
 
 
 def AddOutput(name, type=1, posedge=None, negedge=None, nodefault=False,
-              async=False):
+              async=False, initial=None):
     names = name.split()
     if len(names) > 1:
         outputs = []
@@ -777,7 +784,8 @@ def AddOutput(name, type=1, posedge=None, negedge=None, nodefault=False,
     signal.set_materialize()
 
     if posedge is not None or negedge is not None:
-        AddFF(signal, posedge=posedge, negedge=negedge, nodefault=nodefault)
+        AddFF(signal, posedge=posedge, negedge=negedge, nodefault=nodefault,
+              initial=initial)
 
     if async:
         AddAsync(signal)
@@ -823,7 +831,8 @@ def AddPort(name, type, role, posedge=None, negedge=None, nodefault=False,
     return bundle
 
 
-def AddReg(name, type=1, posedge=None, negedge=None, nodefault=False, async=None):
+def AddReg(name, type=1, posedge=None, negedge=None, nodefault=False,
+           async=None, initial=None):
     names = name.split()
     if len(names) > 1:
         return [AddReg(n, type, posedge, negedge, nodefault, async) for n in names]
@@ -845,7 +854,8 @@ def AddReg(name, type=1, posedge=None, negedge=None, nodefault=False, async=None
     signal.set_materialize()
 
     if posedge is not None or negedge is not None:
-        AddFF(signal, posedge=posedge, negedge=negedge, nodefault=nodefault)
+        AddFF(signal, posedge=posedge, negedge=negedge, nodefault=nodefault,
+              initial=initial)
 
     if async:
         AddAsync(signal)
@@ -878,10 +888,11 @@ def AddMemory(name, type, depth, posedge=None, negedge=None):
     return bundle
 
 
-def AddFF(signal, posedge=None, negedge=None, nodefault=False, init=None):
+def AddFF(signal, posedge=None, negedge=None, nodefault=False, initial=None):
     if isinstance(signal, ChipyBundle):
         for member in signal.members.values():
-            AddFF(member, posedge=posedge, negedge=negedge, nodefault=nodefault)
+            AddFF(member, posedge=posedge, negedge=negedge, nodefault=nodefault,
+                  initial=initial)
         return
 
     assert signal.register and not signal.regaction
@@ -897,6 +908,14 @@ def AddFF(signal, posedge=None, negedge=None, nodefault=False, init=None):
     snippet.text_lines.append(line)
     snippet.lvalue_signals[signal.name] = signal
     signal.module.init_snippets.append(snippet)
+
+    if initial is not None:
+        snippet = ChipySnippet()
+        line = snippet.indent_str + "%s = %d; // %s" \
+               % (signal.name, initial, ChipyCodeLoc())
+        snippet.text_lines.append(line)
+        snippet.lvalue_signals[signal.name] = signal
+        signal.module.initial_snippets.append(snippet)
 
     if posedge is not None:
         raction = "  always @(posedge %s) %s <= %s; // %s" \
