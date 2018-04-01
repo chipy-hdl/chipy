@@ -169,7 +169,10 @@ class ChipyModule:
         instance_lines = list()
 
         for memname, memory in sorted(self.memories.items()):
-            wirelist.append("  %sreg [%d:0] %s [0:%d]; // %s" % ("signed " if memory.signed else "", memory.width-1, memory.name, memory.depth-1, memory.codeloc))
+            wirelist.append("  %sreg [%d:0] %s [0:%d]; // %s"
+                            % ("signed " if memory.signed else "",
+                               memory.width-1, memory.name,
+                               memory.depth-1, memory.codeloc))
 
         for signame, signal in sorted(self.signals.items()):
             if not signal.materialize:
@@ -181,32 +184,49 @@ class ChipyModule:
                 if signal.signed: port_type = "signed " + port_type
                 if signal.vlog_reg: port_type = port_type + " reg"
                 if signal.width > 1:
-                    portlist.append("  %s [%d:0] %s /* %s */" % (port_type, signal.width-1, signal.name, signal.codeloc))
+                    portlist.append("  %s [%d:0] %s /* %s */"
+                                    % (port_type, signal.width-1, signal.name,
+                                       signal.codeloc))
                 else:
-                    portlist.append("  %s %s /* %s */" % (port_type, signal.name, signal.codeloc))
+                    portlist.append("  %s %s /* %s */"
+                                    % (port_type, signal.name, signal.codeloc))
             else:
                 wire_type = "wire"
                 if signal.vlog_reg: wire_type = "reg"
                 if signal.width > 1:
-                    wirelist.append("  %s [%d:0] %s; // %s" % (wire_type, signal.width-1, signal.name, signal.codeloc))
+                    wirelist.append("  %s [%d:0] %s; // %s"
+                                    % (wire_type, signal.width-1, signal.name,
+                                       signal.codeloc))
                 else:
-                    wirelist.append("  %s %s; // %s" % (wire_type, signal.name, signal.codeloc))
+                    wirelist.append("  %s %s; // %s"
+                                    % (wire_type, signal.name, signal.codeloc))
                 if signal.vlog_rvalue is not None:
-                    assignlist.append("  assign %s = %s; // %s" % (signal.name, signal.vlog_rvalue, signal.codeloc))
+                    assignlist.append("  assign %s = %s; // %s"
+                                      % (signal.name, signal.vlog_rvalue,
+                                         signal.codeloc))
             if signal.register:
                 if not signal.gotassign:
-                    ChipyError("Register without assignment: %s.%s" % (signal.module.name, signal.name))
+                    ChipyError("Register without assignment: %s.%s"
+                               % (signal.module.name, signal.name))
                 if not signal.regaction:
-                    ChipyError("Register without synchronization element: %s.%s" % (signal.module.name, signal.name))
+                    ChipyError("Register without synchronization element: %s.%s"
+                               % (signal.module.name, signal.name))
                 if signal.width > 1:
-                    wirelist.append("  reg [%d:0] %s; // %s" % (signal.width-1, signal.vlog_lvalue, signal.codeloc))
+                    wirelist.append("  reg [%d:0] %s; // %s"
+                                    % (signal.width-1, signal.vlog_lvalue,
+                                       signal.codeloc))
                 else:
-                    wirelist.append("  reg %s; // %s" % (signal.vlog_lvalue, signal.codeloc))
+                    wirelist.append("  reg %s; // %s"
+                                    % (signal.vlog_lvalue, signal.codeloc))
 
         for inst_name, inst_type, inst_bundle, inst_codeloc in self.instances:
-            instance_lines.append("  %s %s ( // %s" % (inst_type, inst_name, inst_codeloc))
+            instance_lines.append("  %s %s ( // %s"
+                                  % (inst_type, inst_name, inst_codeloc))
             for member_name, member_sig in inst_bundle.items():
-                expr = member_sig.name if member_sig.portalias is None else member_sig.portalias
+                if member_sig.portalias is None:
+                    expr = member_sig.name
+                else:
+                    expr = member_sig.portalias
                 instance_lines.append("    .%s(%s)," % (member_name, expr))
             instance_lines[-1] = instance_lines[-1][:-1]
             instance_lines.append("  );")
@@ -268,9 +288,11 @@ class ChipyModule:
 
         for memory in self.memories.values():
             if memory.posedge is not None:
-                print("  always @(posedge %s) begin" % memory.posedge.name, file=f)
+                print("  always @(posedge %s) begin"
+                      % memory.posedge.name, file=f)
             if memory.negedge is not None:
-                print("  always @(negedge %s) begin" % memory.negedge.name, file=f)
+                print("  always @(negedge %s) begin"
+                      % memory.negedge.name, file=f)
             for line in memory.regactions:
                 print("    " + line, file=f)
             print("  end", file=f)
@@ -409,9 +431,11 @@ class ChipySignal:
             else:
                 assert 0
 
-            signal.vlog_rvalue = "%s[%s %c: %d]" % (self_name, index, updown, width)
+            signal.vlog_rvalue = "%s[%s %c: %d]" \
+                                 % (self_name, index, updown, width)
             if self.vlog_lvalue is not None:
-                signal.vlog_lvalue = "%s[%s %c: %d]" % (self.vlog_lvalue, index, updown, width)
+                signal.vlog_lvalue = "%s[%s %c: %d]" \
+                                     % (self.vlog_lvalue, index, updown, width)
             return signal
 
         if isinstance(index, slice):
@@ -560,7 +584,8 @@ class ChipySignal:
 
 
 class ChipyMemory:
-    def __init__(self, module, width, depth, name=None, posedge=None, negedge=None, signed=False):
+    def __init__(self, module, width, depth, name=None, posedge=None,
+                 negedge=None, signed=False):
         if name is None:
             name = ChipyAutoName()
 
@@ -725,15 +750,20 @@ def AddInput(name, type=1):
     return signal
 
 
-def AddOutput(name, type=1, posedge=None, negedge=None, nodefault=False, async=False):
+def AddOutput(name, type=1, posedge=None, negedge=None, nodefault=False,
+              async=False):
     names = name.split()
     if len(names) > 1:
-        return [AddOutput(n, type, posedge, negedge, nodefault, async) for n in names]
+        outputs = []
+        for n in names:
+            outputs.append(AddOutput(n, type, posedge, negedge, nodefault, async))
+        return outputs
     assert len(names) == 1
     name = names[0]
 
     if not isinstance(type, int):
-        return AddPort(name, type, "output", posedge=posedge, negedge=negedge, nodefault=nodefault, async=async)
+        return AddPort(name, type, "output", posedge=posedge, negedge=negedge,
+                       nodefault=nodefault, async=async)
 
     assert ChipyCurrentContext is not None
     module = ChipyCurrentContext.module
@@ -755,7 +785,8 @@ def AddOutput(name, type=1, posedge=None, negedge=None, nodefault=False, async=F
     return signal
 
 
-def AddPort(name, type, role, posedge=None, negedge=None, nodefault=False, async=None):
+def AddPort(name, type, role, posedge=None, negedge=None, nodefault=False,
+            async=None):
     bundle = ChipyBundle()
 
     def addport(port_name, port_type, port_role=None, output=False):
@@ -772,13 +803,21 @@ def AddPort(name, type, role, posedge=None, negedge=None, nodefault=False, async
 
         if isinstance(port_type, int):
             if role == "register":
-                bundle.add(port_name, AddReg(prefix + port_name, port_type, posedge=posedge, negedge=negedge, nodefault=nodefault, async=async))
+                reg = AddReg(prefix + port_name, port_type, posedge=posedge,
+                             negedge=negedge, nodefault=nodefault, async=async)
+                bundle.add(port_name, reg)
             elif output:
-                bundle.add(port_name, AddOutput(prefix + port_name, port_type, posedge=posedge, negedge=negedge, nodefault=nodefault, async=async))
+                out = AddOutput(prefix + port_name, port_type, posedge=posedge,
+                                negedge=negedge, nodefault=nodefault,
+                                async=async)
+                bundle.add(port_name, out)
             else:
                 bundle.add(port_name, AddInput(prefix + port_name, port_type))
         else:
-            bundle.add(port_name, AddPort(prefix + port_name, port_type, port_role, posedge=posedge, negedge=negedge, nodefault=nodefault, async=async))
+            port = AddPort(prefix + port_name, port_type, port_role,
+                           posedge=posedge, negedge=negedge,
+                           nodefault=nodefault, async=async)
+            bundle.add(port_name, port)
 
     type(addport, role)
     return bundle
@@ -792,7 +831,8 @@ def AddReg(name, type=1, posedge=None, negedge=None, nodefault=False, async=None
     name = names[0]
 
     if not isinstance(type, int):
-        return AddPort(name, type, "register", posedge=posedge, negedge=negedge, nodefault=nodefault, async=async)
+        return AddPort(name, type, "register", posedge=posedge, negedge=negedge,
+                       nodefault=nodefault, async=async)
 
     assert ChipyCurrentContext is not None
     module = ChipyCurrentContext.module
@@ -824,19 +864,21 @@ def AddMemory(name, type, depth, posedge=None, negedge=None):
     module = ChipyCurrentContext.module
 
     if isinstance(type, int):
-        return ChipyMemory(module, abs(type), depth, name, posedge=posedge, negedge=negedge, signed=(type < 0))
+        return ChipyMemory(module, abs(type), depth, name, posedge=posedge,
+                           negedge=negedge, signed=(type < 0))
 
     bundle = Bundle()
     prefix = (name + "__") if name != "" else ""
 
     def addport(port_name, port_type, port_role=None, output=False):
-        bundle.add(port_name, AddMemory(prefix + port_name, port_type, depth, posedge=posedge, negedge=negedge))
+        bundle.add(port_name, AddMemory(prefix + port_name, port_type, depth,
+                                        posedge=posedge, negedge=negedge))
 
     type(addport, "memory")
     return bundle
 
 
-def AddFF(signal, posedge=None, negedge=None, nodefault=False):
+def AddFF(signal, posedge=None, negedge=None, nodefault=False, init=None):
     if isinstance(signal, ChipyBundle):
         for member in signal.members.values():
             AddFF(member, posedge=posedge, negedge=negedge, nodefault=nodefault)
@@ -847,19 +889,27 @@ def AddFF(signal, posedge=None, negedge=None, nodefault=False):
 
     snippet = ChipySnippet()
     if nodefault:
-        snippet.text_lines.append(snippet.indent_str + "%s = %d'bx; // %s" % (signal.vlog_lvalue, signal.width, ChipyCodeLoc()))
+        line = snippet.indent_str + "%s = %d'bx; // %s" \
+            % (signal.vlog_lvalue, signal.width, ChipyCodeLoc())
     else:
-        snippet.text_lines.append(snippet.indent_str + "%s = %s; // %s" % (signal.vlog_lvalue, signal.name, ChipyCodeLoc()))
+        line = snippet.indent_str + "%s = %s; // %s" \
+            % (signal.vlog_lvalue, signal.name, ChipyCodeLoc())
+    snippet.text_lines.append(line)
     snippet.lvalue_signals[signal.name] = signal
     signal.module.init_snippets.append(snippet)
 
     if posedge is not None:
-        signal.module.regactions.append("  always @(posedge %s) %s <= %s; // %s" % (posedge.name, signal.name, signal.vlog_lvalue, ChipyCodeLoc()))
+        raction = "  always @(posedge %s) %s <= %s; // %s" \
+                  % (posedge.name, signal.name, signal.vlog_lvalue,
+                     ChipyCodeLoc())
+        signal.module.regactions.append(raction)
         signal.vlog_reg = True
         num_actions += 1
 
     if negedge is not None:
-        signal.module.regactions.append("  always @(negedge %s) %s <= %s; // %s" % (posedge.name, signal.name, signal.vlog_lvalue, ChipyCodeLoc()))
+        raction = "  always @(negedge %s) %s <= %s; // %s" \
+                  % (posedge.name, signal.name, signal.vlog_lvalue, ChipyCodeLoc())
+        signal.module.regactions.append(raction)
         signal.vlog_reg = True
         num_actions += 1
 
@@ -876,11 +926,15 @@ def AddAsync(signal):
     assert signal.register and not signal.regaction
 
     snippet = ChipySnippet()
-    snippet.text_lines.append(snippet.indent_str + "%s = %d'bx; // %s" % (signal.vlog_lvalue, signal.width, ChipyCodeLoc()))
+    line = snippet.indent_str + "%s = %d'bx; // %s" \
+           % (signal.vlog_lvalue, signal.width, ChipyCodeLoc())
+    snippet.text_lines.append(line)
     snippet.lvalue_signals[signal.name] = signal
     signal.module.init_snippets.append(snippet)
 
-    signal.module.regactions.append("  assign %s = %s; // %s" % (signal.name, signal.vlog_lvalue, ChipyCodeLoc()))
+    raction = "  assign %s = %s; // %s" \
+              % (signal.name, signal.vlog_lvalue, ChipyCodeLoc())
+    signal.module.regactions.append(raction)
     signal.regaction = True
 
 
@@ -1000,7 +1054,9 @@ def Connect(sigs):
     module = ChipyCurrentContext.module
 
     for sig in slave_sigs:
-        module.regactions.append("  assign %s = %s; // %s" % (sig.name, master_sig.name, ChipyCodeLoc()))
+        raction = "  assign %s = %s; // %s" \
+                  % (sig.name, master_sig.name, ChipyCodeLoc())
+        module.regactions.append(raction)
         sig.portalias = master_sig.name
         sig.register = False
         sig.regaction = False
@@ -1028,15 +1084,19 @@ def Assign(lhs, rhs):
         wen.set_materialize()
 
         snippet = ChipySnippet()
-        snippet.text_lines.append(snippet.indent_str + "%s = 1'b0; // %s" % (wen.name, ChipyCodeLoc()))
+        snippet.text_lines.append(snippet.indent_str + "%s = 1'b0; // %s"
+                                  % (wen.name, ChipyCodeLoc()))
         snippet.lvalue_signals[wen.name] = wen
         module.init_snippets.append(snippet)
 
         ChipyContext()
-        ChipyCurrentContext.add_line("%s = 1'b1; // %s" % (wen.name, ChipyCodeLoc()), wen.get_deps())
+        ChipyCurrentContext.add_line("%s = 1'b1; // %s"
+                                     % (wen.name, ChipyCodeLoc()), wen.get_deps())
         ChipyCurrentContext.popctx()
 
-        lhs.memory.regactions.append("if (%s) %s <= %s; // %s" % (wen.name, lhs.vlog_rvalue, rhs.name, ChipyCodeLoc()))
+        lhs.memory.regactions.append("if (%s) %s <= %s; // %s"
+                                     % (wen.name, lhs.vlog_rvalue, rhs.name,
+                                        ChipyCodeLoc()))
 
         return
 
@@ -1047,7 +1107,8 @@ def Assign(lhs, rhs):
     for lhs_dep in lhs_deps.values():
         lhs_dep.gotassign = True
 
-    ChipyCurrentContext.add_line("%s = %s; // %s" % (lhs.vlog_lvalue, rhs.name, ChipyCodeLoc()), lhs_deps)
+    ChipyCurrentContext.add_line("%s = %s; // %s" % (lhs.vlog_lvalue, rhs.name,
+                                                     ChipyCodeLoc()), lhs_deps)
 
     ChipyCurrentContext.popctx()
 
@@ -1074,8 +1135,10 @@ def Sig(arg, width=None):
         return ChipyCurrentContext.module.signals[arg]
 
     if isinstance(arg, int):
-        if width is None: width=-32
-        signal = ChipySignal(None, "%s'%sd%d" % (abs(width), "s" if width < 0 else "", arg), True)
+        if width is None:
+            width = -32
+        var = "%s'%sd%d" % (abs(width), "s" if width < 0 else "", arg)
+        signal = ChipySignal(None, var, True)
         signal.signed = width < 0
         signal.width = abs(width)
         return signal
@@ -1093,7 +1156,8 @@ class If:
 
         ChipyContext()
         self.cond.set_materialize()
-        ChipyCurrentContext.add_line("if (%s) begin // %s" % (self.cond.name, ChipyCodeLoc()))
+        ChipyCurrentContext.add_line("if (%s) begin // %s"
+                                     % (self.cond.name, ChipyCodeLoc()))
         ChipyCurrentContext.add_indent()
 
     def __exit__(self, type, value, traceback):
@@ -1115,7 +1179,8 @@ class ElseIf:
 
         ChipyElseContext.pushctx()
         self.cond.set_materialize()
-        ChipyCurrentContext.add_line("else if (%s) begin // %s" % (self.cond.name, ChipyCodeLoc()))
+        ChipyCurrentContext.add_line("else if (%s) begin // %s"
+                                     % (self.cond.name, ChipyCodeLoc()))
         ChipyCurrentContext.add_indent()
 
     def __exit__(self, type, value, traceback):
@@ -1165,7 +1230,8 @@ class Switch:
             ChipyCurrentContext.add_line("(* parallel_case *)")
         if self.full:
             ChipyCurrentContext.add_line("(* full_case *)")
-        ChipyCurrentContext.add_line("case (%s) // %s" % (self.expr.name, ChipyCodeLoc()))
+        ChipyCurrentContext.add_line("case (%s) // %s"
+                                     % (self.expr.name, ChipyCodeLoc()))
         ChipyCurrentContext.add_indent()
 
     def __exit__(self, type, value, traceback):
@@ -1187,7 +1253,8 @@ class Case:
 
         ChipyContext()
         self.expr.set_materialize()
-        ChipyCurrentContext.add_line("%s: begin // %s" % (self.expr.name, ChipyCodeLoc()))
+        ChipyCurrentContext.add_line("%s: begin // %s"
+                                     % (self.expr.name, ChipyCodeLoc()))
         ChipyCurrentContext.add_indent()
 
     def __exit__(self, type, value, traceback):
