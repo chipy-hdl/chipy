@@ -1057,26 +1057,26 @@ def Connect(sigs):
             Connect(newsigs)
         return
 
-    master_sig = None
-    slave_sigs = list()
+    source_sig = None
+    sink_sigs = list()
 
     for sig in sigs:
         if not sig.register or sig.regaction or sig.gotassign:
-            assert master_sig is None
-            master_sig = sig
+            assert source_sig is None
+            source_sig = sig
         else:
-            slave_sigs.append(sig)
+            sink_sigs.append(sig)
 
-    assert master_sig is not None
+    assert source_sig is not None
 
     assert ChipyCurrentContext is not None
     module = ChipyCurrentContext.module
 
-    for sig in slave_sigs:
+    for sig in sink_sigs:
         raction = "  assign %s = %s; // %s" \
-                  % (sig.name, master_sig.name, ChipyCodeLoc())
+                  % (sig.name, source_sig.name, ChipyCodeLoc())
         module.regactions.append(raction)
-        sig.portalias = master_sig.name
+        sig.portalias = source_sig.name
         sig.register = False
         sig.regaction = False
         sig.gotassign = False
@@ -1310,13 +1310,13 @@ Default = Default()
 
 def Stream(data_type, last=False, destbits=0):
     def callback(addport, role):
-        addport("valid", 1, output=(role == "master"))
-        addport("ready", 1, output=(role == "slave"))
-        addport("data", data_type, output=(role == "master"))
+        addport("valid", 1, output=(role == "source"))
+        addport("ready", 1, output=(role == "sink"))
+        addport("data", data_type, output=(role == "source"))
         if last:
-            addport("last", 1, output=(role == "master"))
+            addport("last", 1, output=(role == "source"))
         if destbits != 0:
-            addport("dest", destbits, output=(role == "master"))
+            addport("dest", destbits, output=(role == "source"))
     return callback
 
 

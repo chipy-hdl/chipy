@@ -18,8 +18,8 @@ def rgb2gray(indata):
 
 with AddModule("gate_1"):
     clk = AddInput("clk")
-    inp = AddPort("in", Stream(rgbdata), "slave")
-    out = AddPort("out", Stream(graydata), "master")
+    inp = AddPort("in", Stream(rgbdata), "sink")
+    out = AddPort("out", Stream(graydata), "source")
 
     inp.ready_.next = inp.valid_ & (~out.valid_ | out.ready_)
 
