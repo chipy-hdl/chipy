@@ -12,6 +12,7 @@ A Simple Example
 
 The following is a simple Chipy example design:
 
+```python
     from Chipy import *
 
     with AddModule("ADD_OR_SUB_DEMO"):
@@ -27,6 +28,7 @@ The following is a simple Chipy example design:
 
     with open("demo.v", "w") as f:
         WriteVerilog(f)
+```
 
 The `AddModule` function adds a new module to the design and return it. To
 add elements to a module, create a `with <module>: ...` block and call the
@@ -53,6 +55,7 @@ done by putting the assignments in blocks such as `with If(..): ...` or
 Here is a different version of the design, demonstrating some of the variations
 mentioned so far:
 
+```python
     from Chipy import *
 
     with AddModule("ADD_OR_SUB_DEMO"):
@@ -70,7 +73,7 @@ mentioned so far:
 
     with open("demo.v", "w") as f:
         WriteVerilog(f)
-
+```
 
 Chipy Reference Manual
 ======================
@@ -95,10 +98,12 @@ is returned. A Python `with` block using a Chipy module as argument is used to
 create a new Chipy context that can be used to add elements to the module. For
 example, the following will create a new module `demo` with an input port `clk`:
 
+```python
     demo_mod = AddModule("demo")
 
     with demo_mod:
         AddInput("clk")
+```
 
 ### Module(name=None)
 
@@ -111,8 +116,10 @@ referenced by the current context is returned.
 This function write the current design to the specified file handle. The file
 has to be opened first using for example the Python `open` function:
 
+```python
     with open("demo.v", "w") as f:
         WriteVerilog(f)
+```
 
 ### ResetDesign()
 
@@ -129,8 +136,10 @@ This function adds a new input port to the current module. The new signal is
 returned. If name contains more than one white-space separated token, then
 multiple ports are created at once and a list is returned. For example:
 
+```python
     with AddModule("demo"):
         clk, a, b = AddInput("clk a b")
+```
 
 The `type` argument specifies the width of the new signal. A negative number
 denotes a signed signal, i.e. the value `5` would be used to create an unsigned
