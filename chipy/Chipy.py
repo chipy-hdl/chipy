@@ -21,6 +21,7 @@ import traceback
 import os.path
 
 
+ChipySystemVerilog = False
 ChipyModulesDict = dict()
 ChipyCurrentContext = None
 ChipyElseContext = None
@@ -237,6 +238,9 @@ class ChipyModule:
         print(",\n".join(portlist), file=f)
         print(");", file=f)
 
+        if not ChipySystemVerilog:
+            print("  wire __always_comb_guard = 1;", file=f)
+
         for line in wirelist:
             print(line, file=f)
 
@@ -280,7 +284,10 @@ class ChipyModule:
             snippet_groups[grp].append(snippet_db[idx])
 
         for snippets in snippet_groups.values():
-            print("  always @* begin", file=f)
+            if ChipySystemVerilog:
+                print("  always_comb begin", file=f)
+            else:
+                print("  always @* if (__always_comb_guard) begin", file=f)
             for snippet in snippets:
                 # print("    // -- %s --" % (" ".join([sig.name for sig in snippet.lvalue_signals.keys()])), file=f)
                 for line in snippet.text_lines:
@@ -295,11 +302,13 @@ class ChipyModule:
 
         for memory in self.memories.values():
             if memory.posedge is not None:
-                print("  always @(posedge %s) begin"
-                      % memory.posedge.name, file=f)
+                print("  always%s @(posedge %s) begin"
+                      % ("_ff" if ChipySystemVerilog else "",
+                         memory.posedge.name), file=f)
             if memory.negedge is not None:
-                print("  always @(negedge %s) begin"
-                      % memory.negedge.name, file=f)
+                print("  always%s @(negedge %s) begin"
+                      % ("_ff" if ChipySystemVerilog else "",
+                         memory.negedge.name), file=f)
             for line in memory.regactions:
                 print("    " + line, file=f)
             print("  end", file=f)
@@ -918,16 +927,19 @@ def AddFF(signal, posedge=None, negedge=None, nodefault=False, initial=None):
         signal.module.initial_snippets.append(snippet)
 
     if posedge is not None:
-        raction = "  always @(posedge %s) %s <= %s; // %s" \
-                  % (posedge.name, signal.name, signal.vlog_lvalue,
+        raction = "  always%s @(posedge %s) %s <= %s; // %s" \
+                  % ("_ff" if ChipySystemVerilog else "",
+                     posedge.name, signal.name, signal.vlog_lvalue,
                      ChipyCodeLoc())
         signal.module.regactions.append(raction)
         signal.vlog_reg = True
         num_actions += 1
 
     if negedge is not None:
-        raction = "  always @(negedge %s) %s <= %s; // %s" \
-                  % (posedge.name, signal.name, signal.vlog_lvalue, ChipyCodeLoc())
+        raction = "  always%s @(negedge %s) %s <= %s; // %s" \
+                  % ("_ff" if ChipySystemVerilog else "",
+                     posedge.name, signal.name, signal.vlog_lvalue,
+                     ChipyCodeLoc())
         signal.module.regactions.append(raction)
         signal.vlog_reg = True
         num_actions += 1
