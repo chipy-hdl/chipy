@@ -239,7 +239,8 @@ class ChipyModule:
         print(");", file=f)
 
         if not ChipySystemVerilog:
-            print("  wire __always_comb_guard = 1;", file=f)
+            print("  reg __always_comb_guard;", file=f)
+            print("  initial __always_comb_guard <= 1;", file=f)
 
         for line in wirelist:
             print(line, file=f)
